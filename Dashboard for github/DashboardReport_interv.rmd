@@ -1,0 +1,228 @@
+---
+title: "GH CEA Registry Dashboard"
+#author: "Jojo Emerson"
+#date: "October 25, 2018"
+output: html_document
+params:
+  intervention: NA
+  methods: NA
+  ratios: NA
+  countries: NA
+  logo: NA
+  logo2: NA
+---
+
+```{r, echo=FALSE, out.width="20%"}
+library(knitr)
+suppressWarnings(library(png))
+
+  #logo as object
+  logo_object <- readPNG(params$logo)
+  knitr::include_graphics(params$logo)
+    logo_object2 <- readPNG(params$logo2)
+    knitr::include_graphics(params$logo2)
+```
+
+# Registry Contents for `r paste(params$intervention)`
+
+```{r echo = FALSE} 
+library(knitr)
+
+    #Create vector of Registry contents for selected disease:
+    # of studies and ratios, range of ICERs, # of interventions and countries
+ 
+    #Number of studies
+    num_studies<-nrow(params$methods)
+    
+    #Number of ratios
+    num_ratios<-nrow(params$ratios)
+    
+    #Range of ICERs
+     suppressWarnings({
+      high_ICER<-max(params$ratios$NumericICER)
+      high_ICER<-ifelse(high_ICER == -999999, "Cost-Saving", high_ICER)
+      high_ICER<-ifelse(high_ICER == 9999999, "Dominated", high_ICER)
+      low_ICER<-min(params$ratios$NumericICER)
+      low_ICER<-ifelse(low_ICER == -999999, "Cost-Saving", low_ICER)
+      low_ICER<-ifelse(low_ICER == 9999999, "Dominated", low_ICER)
+
+      range_ICER<-paste(low_ICER,high_ICER, sep = " - ")
+     })
+   
+   #Numer of diseases
+    disease_specific_country<-
+      rbind(as.data.frame(table(params$methods$GBDDis1_tier1)),
+            as.data.frame(table(params$methods$GBDDis1_tier2)),
+            as.data.frame(table(params$methods$GBDDis1_tier3)),
+            as.data.frame(table(params$methods$GBDDis1_tier4)),
+            as.data.frame(table(params$methods$GBDDis2_tier1)),
+            as.data.frame(table(params$methods$GBDDis2_tier2)),
+            as.data.frame(table(params$methods$GBDDis2_tier3)),
+            as.data.frame(table(params$methods$GBDDis2_tier4)),
+            as.data.frame(table(params$methods$GBDDis3_tier1)),
+            as.data.frame(table(params$methods$GBDDis3_tier2)),
+            as.data.frame(table(params$methods$GBDDis3_tier3)),
+            as.data.frame(table(params$methods$GBDDis3_tier4)),
+            as.data.frame(table(params$methods$GBDDis4_tier1)),
+            as.data.frame(table(params$methods$GBDDis4_tier2)),
+            as.data.frame(table(params$methods$GBDDis4_tier3)),
+            as.data.frame(table(params$methods$GBDDis4_tier4)),
+            as.data.frame(table(params$methods$GBDDis5_tier1)),
+            as.data.frame(table(params$methods$GBDDis5_tier2)),
+            as.data.frame(table(params$methods$GBDDis5_tier3)),
+            as.data.frame(table(params$methods$GBDDis5_tier4)))
+    unique_diseases_country<-length(unique(disease_specific_country$Var1))
+   
+   #Number of countries
+   unique_countries<-length(unique(params$ratios$Country))
+   
+```
+
+Registry contents               |
+--------------------------------|-------------------------------
+Number of studies               |`r paste(num_studies)`
+Number of ratios                |`r paste(num_ratios)`
+Range of ICERs (2016 USD)       |`r paste(range_ICER)`
+Number of unique diseases       |`r paste(unique_diseases_country)`
+Number of countries represented |`r paste(unique_countries)`
+
+***
+### Top 5 Selected Cost-Effective Interventions for `r paste(params$intervention)`
+
+```{r echo = FALSE}
+#order subsetted ratios from most to least cost effective
+    ordered_ratios <- params$ratios[order(params$ratios$NumericICER),] 
+    #reduce to only top 5
+    ordered_ratios<-ordered_ratios[1:5,]
+    #create output table format
+    league_table<-data.frame(ordered_ratios$InterventionCombined, ordered_ratios$TargetPopulation, ordered_ratios$DisplayRatio, ordered_ratios$TitleAut)
+    colnames(league_table)<-c("Intervention", "Target Population", "Cost/DALY averted", "Source (Title, Author)")
+
+    kable(league_table)
+    
+```
+
+***
+### Density of Ratios by Country for `r paste(params$intervention)`
+
+```{r echo = FALSE, message = FALSE}
+
+library(plotly)
+library(ggplot2)
+
+#create number of ratios dataframe
+     numratios_country<-data.frame(table(params$ratios$Country))
+     colnames(numratios_country)<-c("COUNTRY", "NUM_STUDIES")
+     
+     #merge with shapefile
+     df <- merge(params$countries, numratios_country, on = "COUNTRY")
+     
+     # light grey boundaries
+     l <- list(color = toRGB("grey"), width = 0.5)
+     
+     # specify map projection/options
+     g <- list(
+       showframe = FALSE,
+       showcoastlines = TRUE,
+       projection = list(type = 'Mercator')
+     )
+     
+     map <- plot_geo(df) %>%
+       add_trace(
+         z = ~NUM_STUDIES, color = ~NUM_STUDIES, colors = 'Blues',
+         text = ~COUNTRY, locations = ~CODE, marker = list(line = l)
+       ) %>%
+       colorbar(title = 'Number of cost/DALY Ratios') %>%
+       layout(
+        geo = g)
+
+     map
+```
+
+***
+### Distribution of CEAs by Disease Area for `r paste(params$intervention)`
+```{r echo = FALSE, message = FALSE}
+library(dplyr)
+
+#create dataframe
+    treemap_data_interv<-as.data.frame(table(params$methods$GBDDis1_tier2))
+    colnames(treemap_data_interv)<-c("Disease", "Number of CEAs")
+    #rename diseases to shorthand
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Cardiovascular and circulatory diseases"]<-"Cardiovascular/circulatory"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Chronic respiratory diseases"]<-"Chronic respiratory"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Diabetes, urogenital, blood, and endocrine diseases"]<-"Diabetes and related"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Diarrhea, lower respiratory infections, meningitis, and other common infectious diseases"]<-"Common infectious"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Digestive diseases"]<-"Digestive"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "HIV/AIDS and tuberculosis"]<-"HIV/AIDS, TB"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Maternal disorders"]<-"Maternal"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Neoplasms"]<-"Neoplasms"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Mental and behavioral disorders"]<-"Mental/behavioral"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Musculoskeletal disorders"]<-"Musculoskeletal"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Neglected tropical diseases and malaria"]<-"Neglected tropical"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Neonatal disorders"]<-"Neonatal"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Neurological disorders"]<-"Neurological"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Nutritional deficiencies"]<-"Nutritional"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Other communicable, maternal, neonatal, and nutritional disorders"]<-"Other communicable"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Other non-communicable diseases"]<-"Other non-communicable"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Self-harm and interpersonal violence"]<-"Violence"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Transport injuries"]<-"Transport injury"
+    treemap_data_interv$disease_short[treemap_data_interv$Disease == "Unintentional injuries other than transport injuries"]<-"Other injury"
+    
+    
+    treemap_plot_interv<-ggplot(treemap_data_interv, aes(area = `Number of CEAs`, label = disease_short)) +
+      geom_treemap(colour = 'white', fill = 'steelblue3')+geom_treemap_text(fontface = "italic", colour = "white", place = "centre", grow = TRUE, min.size = 2, reflow = T)
+    
+    treemap_plot_interv
+    
+```
+
+***
+### Distribution of Ratios by CE Threshold* for `r paste(params$intervention)`
+
+```{r echo = FALSE}
+
+#create stacked bar dataframe
+    R_CS<-sum(params$ratios$R_CS)
+    R_LT1<-sum(params$ratios$R_LT1)
+    R_1to3<-sum(params$ratios$R_1to3)
+    R_GT3<-sum(params$ratios$R_GT3)
+    R_D<-sum(params$ratios$R_D)
+    Thresholds<-data.frame(R_CS, R_LT1, R_1to3, R_GT3,R_D)
+    colnames(Thresholds)<-c("R_CS", "R_LT1", "R_1to3", "R_GT3", "R_D")
+    
+    #create ratios stacked bar chart, stratified by ratios
+    stackedbar<-plot_ly(Thresholds, x = ~Thresholds, y = ~R_CS, type = 'bar', name = 'Cost-Saving', 
+                        hoverinfo = "y") %>%
+      add_trace(y = ~R_LT1, name = 'Less than 1x GDP') %>%
+      add_trace(y = ~R_1to3, name = '1-3x GDP') %>%
+      add_trace(y = ~R_GT3, name = 'Greater than 3x GDP') %>%
+      add_trace(y = ~R_D, name = 'Dominated') %>%
+      layout(yaxis = list(title = 'Number of cost/DALY averted ratios'),
+             xaxis = list(title = "", showticklabels=FALSE),
+             barmode = 'stack')
+
+    stackedbar
+
+
+```
+* Although we categorize the ICERs based on country-specific GDP per capita to improve interpretability, we do not endorse any specific cost-effectiveness thresholds as reflective of good or reasonable value for money. More information [found here](http://healtheconomics.tuftsmedicalcenter.org/orchard/thresholds).
+
+***
+### Distribution of CEAs Published Over Time for `r paste(params$intervention)`
+```{r echo = FALSE}
+
+articlecount<-aggregate(params$methods$ArticleID, by = params$methods["PubYear"] , FUN = length)
+      colnames(articlecount)<-c("Year", "Article Count")
+
+      articlecount$Year <- factor(articlecount$Year)
+
+      stackedbar <- plot_ly(articlecount, x = ~Year, y = ~`Article Count`, type = "bar",
+                            marker = list(color = 'rgb(158,202,225)',
+                                          line = list(color = 'rgb(8,48,107)', width = 1.0))) %>%
+        layout(xaxis = list(title = "", showticklabels=TRUE),
+               yaxis = list(title = "Number of cost/DALY CEAs"))
+      
+    stackedbar
+
+```
+
