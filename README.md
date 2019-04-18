@@ -27,17 +27,23 @@ Packages used:
 Current verion: 1.0.11. Last updated April 18, 2019.
 
 ## Screenshots
-![](https://github.com/jgemerson/GHCEAR_LeagueTables/blob/master/Screenshots/1.JPG)
+![](https://github.com/jgemerson/GHCEAR_Dashboard/blob/master/Dashboard%20for%20github/Screenshots/full.JPG)
 _________________
-
-
+![](https://github.com/jgemerson/GHCEAR_Dashboard/blob/master/Dashboard%20for%20github/Screenshots/Tabs.JPG)
 _________________
-
+![](https://github.com/jgemerson/GHCEAR_Dashboard/blob/master/Dashboard%20for%20github/Screenshots/Map.JPG)
 _________________
-
+![](https://github.com/jgemerson/GHCEAR_Dashboard/blob/master/Dashboard%20for%20github/Screenshots/Pie%20and%20treemap.png)
 _________________
-
+![](https://github.com/jgemerson/GHCEAR_Dashboard/tree/master/Dashboard%20for%20github/Screenshots/Reportdownload1.JPG)
 _________________
+![](https://github.com/jgemerson/GHCEAR_Dashboard/blob/master/Dashboard%20for%20github/Screenshots/Report%20download1.JPG)
+_________________
+![](https://github.com/jgemerson/GHCEAR_Dashboard/blob/master/Dashboard%20for%20github/Screenshots/Report%20download2.JPG)
+_________________
+![](https://github.com/jgemerson/GHCEAR_Dashboard/blob/master/Dashboard%20for%20github/Screenshots/Dropdown.png)
+_________________
+![](https://github.com/jgemerson/GHCEAR_Dashboard/blob/master/Dashboard%20for%20github/Screenshots/Stacked%20bar%20and%20bar.JPG)
 
 
  
